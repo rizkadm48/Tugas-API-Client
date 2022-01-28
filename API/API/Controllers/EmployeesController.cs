@@ -51,7 +51,7 @@ namespace API.Controllers
         [Route("RegisteredData")]
         [HttpGet]
 
-        public ActionResult<UserDataVM> GetRegisteredData()
+        public ActionResult<RegisterVM> GetRegisteredData()
         {
             var result = employeerepository.GetRegisteredData();
             if (result != null)

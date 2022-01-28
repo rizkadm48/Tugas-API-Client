@@ -82,34 +82,35 @@ namespace API.Repository.Data
             if(CekEmail != null) {
                 var CekAkun = context.Accounts.Where(e => e.Nik == CekEmail.Nik).FirstOrDefault();
                 Random random = new Random();
-                var Otp = random.Next(0, 1000000).ToString("D6");
-                CekAkun.OTP = int.Parse(Otp);
+                var Otp = random.Next(0, 1000000).ToString("D6"); //ini string random
+                CekAkun.OTP = int.Parse(Otp); //biar jadi int
 
-                var time  = DateTime.Now.AddMinutes(5);
-                CekAkun.ExpiredToken = time;
-                CekAkun.isUsed = false;
+                var Time = DateTime.Now.AddMinutes(5);
+                CekAkun.ExpiredToken = Time; //cek expired dr waktu
+                CekAkun.isUsed = false; //belum dipake jadi false, nanti dichange jadi true
 
-                context.Entry(CekAkun).State = EntityState.Modified;
+                context.Entry(CekAkun).State = EntityState.Modified; //buat update data di account nya
                 context.SaveChanges();
 
-                var fromAddress = "rdm4898@gmail.com";
-                var toAddress = loginVM.EmailPhone;
-                var fromPassword = "Rizkadm4898";
-                var subject = "OTP";
-                var body = "Your OTP is " + Otp;
+                var FromAddress = "rdm4898@gmail.com";
+                var ToAddress = loginVM.EmailPhone;
+                var FromPassword = "Rizkadm4898";
+                var SubjectTime = DateTime.Now;
+                var Subject = "OTP "  + SubjectTime;
+                var Body = "Your OTP is " + Otp;
 
-                var smtp = new SmtpClient
+                var Smtp = new SmtpClient
                 {
                     Host = "smtp.gmail.com",
                     Port = 587,
                     EnableSsl = true,
                     DeliveryMethod = SmtpDeliveryMethod.Network,
                     UseDefaultCredentials = true,
-                    Credentials = new NetworkCredential(fromAddress, fromPassword),
+                    Credentials = new NetworkCredential(FromAddress, FromPassword),
                     Timeout = 20000
                 };
-                MailMessage message = new MailMessage(fromAddress, toAddress, subject, body);
-                smtp.Send(message);
+                MailMessage Message = new MailMessage(FromAddress, ToAddress, Subject, Body);
+                Smtp.Send(Message);
                 return 1;
             }
             else
@@ -118,22 +119,62 @@ namespace API.Repository.Data
             }
         }
 
-        public int ChangePassword(ChangeVM changeVM)
+        public int ChangesPassword(ChangeVM changeVM)
         {
             var CekEmail = context.Employees.Where(e => e.Email == changeVM.Email).FirstOrDefault();
             if(CekEmail != null)
             {
                 var CekAkun = context.Accounts.Where(e => e.Nik == CekEmail.Nik).FirstOrDefault();
-                CekAkun.isUsed = true;
-                
+                var CekOTP = context.Accounts.Where(e => e.OTP == CekAkun.OTP).FirstOrDefault();
+                if (changeVM.OTP == CekOTP.OTP)
+                {
+                    if(CekAkun.isUsed == false)
+                    {
+                        if (CekAkun.ExpiredToken > DateTime.Now)
+                        {
+                            var a = changeVM.NewPass;
+                            var b = changeVM.ConfirmPass;
+                            if(a == b)
+                            {
+                                Account acc = new Account();
+                                changeVM.NewPass = acc.Password;
+
+                                CekAkun.isUsed = true;
+                                context.Entry(CekAkun).State = EntityState.Modified; //buat update data di account nya
+                                context.SaveChanges();
+                            }
+                            else
+                            {
+                                return 6; //Password harus sama
+                            }
+
+                        }
+                        else
+                        {
+                            return 2; // udah expired tokennya
+                        }
+                        
+                    }
+                    else if(CekOTP.isUsed == true)
+                    {
+                        return 4; // OTP sudah terpakai
+                    }
+
+                }
+                else
+                {
+                    return 5; //OTP tidak sama
+                }
 
             }
             else
             {
-                return 3;
+                return 3; //Email tidak ada
             }
             
             return 1;
         }
+
+
     }
 }

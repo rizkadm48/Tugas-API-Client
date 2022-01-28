@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -20,5 +21,9 @@ namespace API.Models
         public int OTP { get; set; }
         public DateTime ExpiredToken { get; set; }
         public Boolean isUsed { get; set; }
+
+        [JsonIgnore]
+        public virtual ICollection<AccountRole> AccountRoles { get; set; }
+        
     }
 }

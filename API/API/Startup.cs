@@ -32,8 +32,8 @@ namespace API
             services.AddControllers();
             services.AddScoped<Repository.Data.EmployeeRepository>();
             services.AddScoped<AccountRepository>();
-            //services.AddScoped<ProfilingRepository>();
-            //services.AddScoped<EducationRepository>();
+            //services.AddScoped<AccountRoleRepository>();
+            services.AddScoped<RoleRepository>();
             services.AddScoped<UniversityRepository>();
             services.AddDbContext<MyContext>(options =>
             options.UseLazyLoadingProxies().UseSqlServer(Configuration.GetConnectionString("APIContext")));

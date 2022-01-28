@@ -80,6 +80,44 @@ namespace API.Controllers
             }
         }
 
-        
+        [Route("ChangesPassword")]
+        [HttpPost]
+
+        public ActionResult ChangesPassword(ChangeVM changeVM)
+        {
+            var result = accountrepository.ChangesPassword(changeVM);
+            if (result > 0)
+            {
+                if (result == 2)
+                {
+                    return StatusCode(400, new { status = HttpStatusCode.BadRequest, result, message = "OTP sudah expired" });
+                }
+                else if (result == 3)
+                {
+                    return StatusCode(400, new { status = HttpStatusCode.BadRequest, result, message = "Email tidak ditemukan" });
+                }
+                else if (result == 4)
+                {
+                    return StatusCode(400, new { status = HttpStatusCode.BadRequest, result, message = "OTP sudah pernah digunakan" });
+                }
+                else if (result == 5)
+                {
+                    return StatusCode(400, new { status = HttpStatusCode.BadRequest, result, message = "OTP tidak terdaftar" });
+                }
+                else if (result == 6)
+                {
+                    return StatusCode(400, new { status = HttpStatusCode.BadRequest, result, message = "Password harus sama" });
+                }
+                else 
+                {
+                    return StatusCode(200, new { status = HttpStatusCode.OK, result, message = "Change password berhasil" });
+                }
+            }
+            else
+            {
+                return StatusCode(400, new { status = HttpStatusCode.BadRequest, result, message = "Gagal forgot password" });
+            }
+        }
+
     }
 }

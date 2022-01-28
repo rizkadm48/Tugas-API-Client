@@ -48,6 +48,12 @@ namespace API.Repository.Data
                     context.Accounts.Add(acc);
                     context.SaveChanges();
 
+                    AccountRole ar = new AccountRole();
+                    ar.Account_Nik = acc.Nik;
+                    ar.Role_Id = 3;
+                    context.AccountRoles.Add(ar);
+                    context.SaveChanges();
+
                     Education ed = new Education();
 
                     ed.Degree = registerVM.Degree;
@@ -119,25 +125,38 @@ namespace API.Repository.Data
             }
         }
 
-        public IEnumerable<UserDataVM> GetRegisteredData()
+        public IEnumerable<RegisterVM> GetRegisteredData()
         {
-            var result = context.Employees.
-                           Include(a => a.Account).
-                           ThenInclude(p => p.Profiling).
-                          ThenInclude(e => e.Education).
-                           ThenInclude(u => u.University).
+            var employees = context.Employees;
+            var accounts = context.Accounts;
+            var accountrole = context.AccountRoles;
+            var role = context.Roles;
+            var profilings = context.Profilings;
+            var educations = context.Educations;
+            var universities = context.Universitys;
 
-                          Select(x => new UserDataVM
+            var result = (from emp in employees
+                          join acc in accounts on emp.Nik equals acc.Nik
+                          join ar in accountrole on acc.Nik equals ar.Account_Nik
+                          join rol in role on ar.Role_Id equals rol.Id
+                          join pro in profilings on acc.Nik equals pro.Nik
+                          join edu in educations on pro.Education_Id equals edu.Id
+                          join univ in universities on edu.University_Id equals univ.Id
+
+                          select new RegisterVM()
                           {
-                              FullName = x.FirstName + " " + x.LastName,
-                              Phone = x.Phone,
-                              BirthDate = x.BirthDate,
-                              Salary = x.Salary,
-                              Email = x.Email,
-                              Degree = x.Account.Profiling.Education.Degree,
-                              GPA = x.Account.Profiling.Education.GPA,
-                              University_Name = x.Account.Profiling.Education.University.Name
-                          }).ToList(); 
+                              FirstName = emp.FirstName,
+                              LastName = emp.LastName,
+                              Phone = emp.Phone,
+                              BirthDate = emp.BirthDate,
+                              Salary = emp.Salary,
+                              Email = emp.Email,
+                              Password = acc.Password,
+                              Degree = edu.Degree,
+                              GPA = edu.GPA,
+                              University_Id = univ.Id,
+                              Role_Name = rol.Name
+                          }).ToList();
 
             return result;
         }
