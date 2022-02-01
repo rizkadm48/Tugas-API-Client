@@ -16,6 +16,7 @@ namespace API.ViewModel
         public string GPA { get; set; }
         public int University_Id { get; set; }
         public  string Role_Name { get; set; }
+        public string Nik { get; set; }
     }
 
     public enum Gender

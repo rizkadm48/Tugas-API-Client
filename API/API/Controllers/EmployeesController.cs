@@ -2,8 +2,10 @@
 using API.Models;
 using API.Repository.Data;
 using API.ViewModel;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 using System.Net;
 
 namespace API.Controllers
@@ -13,9 +15,11 @@ namespace API.Controllers
     public class EmployeesController : BaseController<Employee, EmployeeRepository, string>
     {
         private readonly EmployeeRepository employeerepository;
+
         public EmployeesController(EmployeeRepository employeeRepository) : base(employeeRepository)
         {
             this.employeerepository = employeeRepository;
+
         }
 
         [HttpPost("{Register}")]
@@ -47,21 +51,15 @@ namespace API.Controllers
             }
         }
 
-
-        [Route("RegisteredData")]
-        [HttpGet]
+        [Authorize(Roles = "Director,Manager")]
+        [HttpGet("RegisteredData")]
 
         public ActionResult<RegisterVM> GetRegisteredData()
         {
             var result = employeerepository.GetRegisteredData();
-            if (result != null)
-            {
-                return StatusCode(200, new { status = HttpStatusCode.OK, result, message = "Data Berhasil Ditampilkan" });
-            }
-            else
-            {
-                return StatusCode(404, new { status = HttpStatusCode.NotFound, result, message = "Data Tidak Ditemukan" }); 
-            }
+
+            return StatusCode(200, new { status = HttpStatusCode.OK, result, message = "Data Berhasil Ditampilkan" });
+
         }
     }
 }

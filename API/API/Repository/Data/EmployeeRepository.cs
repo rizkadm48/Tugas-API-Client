@@ -12,6 +12,7 @@ namespace API.Repository.Data
     public class EmployeeRepository : GeneralRepository<MyContext, Employee, string>
     {
         private readonly MyContext context;
+
         public EmployeeRepository(MyContext myContext) : base(myContext)
         {
             this.context = myContext;
@@ -145,6 +146,7 @@ namespace API.Repository.Data
 
                           select new RegisterVM()
                           {
+                              Nik = emp.Nik,
                               FirstName = emp.FirstName,
                               LastName = emp.LastName,
                               Phone = emp.Phone,

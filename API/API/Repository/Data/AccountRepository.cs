@@ -46,36 +46,6 @@ namespace API.Repository.Data
 
         }
 
-        public IEnumerable GetProfile(string EmailPhone)
-        {
-            var employees = context.Employees;
-            var accounts = context.Accounts;
-            var profilings = context.Profilings;
-            var educations = context.Educations;
-            var universities = context.Universitys;
-
-            var result = (from emp in employees
-                          join acc in accounts on emp.Nik equals acc.Nik
-                          join pro in profilings on acc.Nik equals pro.Nik
-                          join edu in educations on pro.Education_Id equals edu.Id
-                          join univ in universities on edu.University_Id equals univ.Id
-                          where (emp.Email == EmailPhone || emp.Phone == EmailPhone)
-                          select new 
-                          {
-                              Nik = emp.Nik,
-                              FullName = emp.FirstName + " " + emp.LastName,
-                              Phone = emp.Phone,
-                              BirthDate = emp.BirthDate,
-                              Salary = emp.Salary,
-                              Email = emp.Email,
-                              Degree = edu.Degree,
-                              GPA = edu.GPA,
-                              UnivName = univ.Name
-                          }).ToList();
-
-            return result;
-        }
-
         public int ForgotPassword(LoginVM loginVM)
         {
             var CekEmail = context.Employees.Where(e => e.Email == loginVM.EmailPhone).FirstOrDefault();

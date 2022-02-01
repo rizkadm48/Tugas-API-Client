@@ -4,18 +4,30 @@ using API.Models;
 using API.Repository;
 using API.Repository.Data;
 using API.ViewModel;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
+using Microsoft.IdentityModel.Tokens;
+using System;
+using System.Collections.Generic;
+using System.IdentityModel.Tokens.Jwt;
+using System.Linq;
 using System.Net;
+using System.Security.Claims;
+using System.Text;
 
 namespace API.Controllers
 {
     public class AccountsController : BaseController<Account, AccountRepository, string>
     {
         private readonly AccountRepository accountrepository;
-
-        public AccountsController(AccountRepository accountRepository) : base(accountRepository)
+        public IConfiguration _configuration;
+        private readonly MyContext context;
+        public AccountsController(AccountRepository accountRepository, IConfiguration configuration, MyContext context) : base(accountRepository)
         {
             this.accountrepository = accountRepository;
+            this._configuration = configuration;
+            this.context = context;
         }
 
         [HttpPost("{login}")]
@@ -34,10 +46,32 @@ namespace API.Controllers
                 }
                 else
                 {
-                    //var GetProfile = accountrepository.GetProfile(loginVM.EmailPhone);
-                    //return Ok(GetProfile);
-                    //return RedirectToAction("GetProfile", "Accounts");
-                    return StatusCode(200, new { status = HttpStatusCode.OK, result, message = "Berhasil login" });
+
+                    var getUserData = context.Employees.Where(e => e.Email == loginVM.EmailPhone).FirstOrDefault();
+                    var getRole = context.Roles.Where(r => r.AccountRoles.Any(ar => ar.Account.Nik == getUserData.Nik)).ToList();
+
+                    var claims = new List<Claim>
+                    {
+                        new Claim("Email", loginVM.EmailPhone), //payload
+                    };
+
+                    foreach (var item in getRole)
+                    {
+                        claims.Add(new Claim("roles", item.Name));
+                    }
+
+                    var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
+                    var signIn = new SigningCredentials(key, SecurityAlgorithms.HmacSha256); //Header
+                    var token = new JwtSecurityToken(
+                        _configuration["Jwt:Issuer"],
+                        _configuration["Jwt:Audience"],
+                        claims,
+                        expires: DateTime.UtcNow.AddMinutes(10), //Set expired times
+                        signingCredentials: signIn);
+                    var idtoken = new JwtSecurityTokenHandler().WriteToken(token); //Generate token
+                    claims.Add(new Claim("TokenSecurity", idtoken.ToString()));
+
+                    return StatusCode(200, new { status = HttpStatusCode.OK, idtoken, message = "Berhasil login" });
                 }
             }
             else
@@ -46,20 +80,16 @@ namespace API.Controllers
             }
         }
 
-        /*[Route("GetProfile")]
-        [HttpGet]
-
-        public ActionResult<LoginVM> GetProfile(LoginVM loginVM)
+        [Authorize]
+        [HttpGet("TestJWT")]
+        public ActionResult TestJWT()
         {
-            var result = accountrepository.GetProfile(loginVM.EmailPhone);
-            //if(LoginVM.ReferenceEquals(result, true) == ProfileVM.ReferenceEquals(result, true)) { }
-                return StatusCode(200, new { status = HttpStatusCode.OK, result, message = "Data Berhasil Ditampilkan" });
-            
-        }*/
+            return Ok("Test JWT Berhasil");
+        }
+
 
         [Route("ForgotPassword")]
         [HttpPost]
-
         public ActionResult ForgotPassword(LoginVM loginVM)
         {
             var result = accountrepository.ForgotPassword(loginVM);
@@ -82,7 +112,6 @@ namespace API.Controllers
 
         [Route("ChangesPassword")]
         [HttpPost]
-
         public ActionResult ChangesPassword(ChangeVM changeVM)
         {
             var result = accountrepository.ChangesPassword(changeVM);
