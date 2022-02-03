@@ -61,5 +61,11 @@ namespace API.Controllers
             return StatusCode(200, new { status = HttpStatusCode.OK, result, message = "Data Berhasil Ditampilkan" });
 
         }
+
+        [HttpGet("TestCORS")]
+        public ActionResult TestCORS()
+        {
+            return Ok("Test CORS Berhasil");
+        }
     }
 }
